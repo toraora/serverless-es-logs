@@ -200,6 +200,8 @@ class ServerlessEsLogsPlugin {
     const template = this.serverless.service.provider.compiledCloudFormationTemplate;
     const functions = this.serverless.service.getAllFunctions();
 
+    const permissionLogicalId = 'AllLambdasCWPermission';
+
     // Add cloudwatch subscription for each function except log processer
     functions.forEach((name: string) => {
       /* istanbul ignore if */
@@ -209,7 +211,6 @@ class ServerlessEsLogsPlugin {
 
       const normalizedFunctionName = this.provider.naming.getNormalizedFunctionName(name);
       const subscriptionLogicalId = `${normalizedFunctionName}SubscriptionFilter`;
-      const permissionLogicalId = `${normalizedFunctionName}CWPermission`;
       const logGroupLogicalId = `${normalizedFunctionName}LogGroup`;
       const logGroupName = template.Resources[logGroupLogicalId].Properties.LogGroupName;
 
@@ -225,7 +226,7 @@ class ServerlessEsLogsPlugin {
         })
         .withFilterPattern(filterPattern)
         .withLogGroupName(logGroupName)
-        .withDependsOn([ this.logProcesserLogicalId, permissionLogicalId ])
+        .withDependsOn([this.logProcesserLogicalId, permissionLogicalId ])
         .build();
 
       // Create subscription template
@@ -237,10 +238,8 @@ class ServerlessEsLogsPlugin {
     });
 
 
-    // const permissionTemplate = 
-
     const permissionTemplate = new TemplateBuilder()
-      .withResource('AllLambdasCWPermission', new LambdaPermissionBuilder()
+      .withResource(permissionLogicalId, new LambdaPermissionBuilder()
         .withFunctionName({
           'Fn::GetAtt': [
             this.logProcesserLogicalId,
