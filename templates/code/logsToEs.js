@@ -6,6 +6,8 @@ var crypto = require('crypto');
 var endpoint = process.env.ES_ENDPOINT;
 var indexPrefix = process.env.ES_INDEX_PREFIX;
 var indexDateSeparator = process.env.ES_INDEX_DATE_SEPARATOR;
+var parseBody = process.env.ES_PARSE_BODY === 'true';
+
 var tags = undefined;
 try {
     tags = JSON.parse(process.env.ES_TAGS);
@@ -121,7 +123,6 @@ function transform(payload) {
 
         var action = { "index": {} };
         action.index._index = indexName;
-        action.index._type = 'serverless-es-logs';
         action.index._id = id;
         
         bulkRequest.push({ id, action, source });
@@ -143,9 +144,11 @@ function buildSource(message, extractedFields) {
                     continue;
                 }
 
-                jsonSubString = extractJson(value);
-                if (jsonSubString !== null) {
-                    source['@' + key] = JSON.parse(jsonSubString);
+                if (parseBody) {
+                    jsonSubString = extractJson(value);
+                    if (jsonSubString !== null) {
+                        source['@' + key] = JSON.parse(jsonSubString);
+                    }
                 }
 
                 source[key] = (key === 'apigw_request_id') ? value.slice(1, value.length - 1) : value;
@@ -154,9 +157,11 @@ function buildSource(message, extractedFields) {
         return source;
     }
 
-    jsonSubString = extractJson(message);
-    if (jsonSubString !== null) { 
-        return JSON.parse(jsonSubString); 
+    if (parseBody) {
+        jsonSubString = extractJson(message);
+        if (jsonSubString !== null) { 
+            return JSON.parse(jsonSubString); 
+        }
     }
 
     return {};

@@ -20,6 +20,7 @@ class ServerlessEsLogsPlugin {
   private defaultLambdaFilterPattern: string = '[timestamp=*Z, request_id="*-*", event]';
   private defaultApiGWFilterPattern: string = '[event]';
   private defaultIndexDateSeparator: string = '.';
+  private defaultParseBody: string = 'false';
 
   constructor(serverless: any, options: { [name: string]: any }) {
     this.serverless = serverless;
@@ -265,7 +266,7 @@ class ServerlessEsLogsPlugin {
   }
 
   private addLogProcesser(): void {
-    const { index, indexDateSeparator, endpoint, tags, vpc, reservedConcurrency } = this.custom().esLogs;
+    const { index, indexDateSeparator, endpoint, tags, vpc, reservedConcurrency, parseBody } = this.custom().esLogs;
     const tagsStringified = tags ? JSON.stringify(tags) : /* istanbul ignore next */ '';
     const dirPath = path.join(this.serverless.config.servicePath, this.logProcesserDir);
     const filePath = path.join(dirPath, 'index.js');
@@ -280,6 +281,7 @@ class ServerlessEsLogsPlugin {
         ES_INDEX_PREFIX: index,
         ES_INDEX_DATE_SEPARATOR: indexDateSeparator || this.defaultIndexDateSeparator,
         ES_TAGS: tagsStringified,
+        ES_PARSE_BODY: parseBody || this.defaultParseBody,
       },
       vpc,
       events: [],
