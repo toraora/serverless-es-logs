@@ -1,6 +1,6 @@
 {
   "name": "@tora-dev/serverless-es-logs",
-  "version": "3.5.4",
+  "version": "3.5.5",
   "license": "MIT",
   "description": "A Serverless plugin to transport logs to ElasticSearch",
   "author": "Daniel Cottone <daniel.cottone@asurion.com> (https://github.com/daniel-cottone)",

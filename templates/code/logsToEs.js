@@ -160,7 +160,21 @@ function buildSource(message, extractedFields) {
     if (parseBody) {
         jsonSubString = extractJson(message);
         if (jsonSubString !== null) { 
-            return JSON.parse(jsonSubString); 
+            try {
+                var numFields = 0;
+                var source = {};
+                var parsed = JSON.parse(jsonSubString);
+                Object.keys(parsed).forEach(function(key, index) {
+                    // limit to 200 fields
+                    if (key !== 'message' && numFields > 200) {
+                        return;
+                    }
+                    source[key] = parsed[key];
+                    numFields += 1;
+                });
+                return source;
+            } 
+            catch (e) { console.log(e); return {}}; 
         }
     }
 
