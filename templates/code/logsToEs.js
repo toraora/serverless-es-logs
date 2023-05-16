@@ -130,6 +130,11 @@ function transform(payload) {
     return bulkRequest;
 }
 
+var parseBodyBlocklist = {
+    'variables': 1,
+    'mutation': 1,
+}
+
 function buildSource(message, extractedFields) {
     var jsonSubString = null;
     if (extractedFields) {
@@ -147,7 +152,23 @@ function buildSource(message, extractedFields) {
                 if (parseBody) {
                     jsonSubString = extractJson(value);
                     if (jsonSubString !== null) {
-                        source['@' + key] = JSON.parse(jsonSubString);
+                        try {
+                            var numFields = 0;
+                            var source = {};
+                            var parsed = JSON.parse(jsonSubString);
+                            Object.keys(parsed).forEach(function(subKey, index) {
+                                if (parseBodyBlocklist[subKey]) {
+                                    return;
+                                }
+                                // limit to 200 fields
+                                if (subKey !== 'message' && numFields > 200) {
+                                    return;
+                                }
+                                source["@" + subKey] = parsed[subKey];
+                                numFields += 1;
+                            });
+                        } 
+                        catch (e) { console.log(e); }; 
                     }
                 }
 
@@ -165,6 +186,9 @@ function buildSource(message, extractedFields) {
                 var source = {};
                 var parsed = JSON.parse(jsonSubString);
                 Object.keys(parsed).forEach(function(key, index) {
+                    if (parseBodyBlocklist[key]) {
+                        return;
+                    }
                     // limit to 200 fields
                     if (key !== 'message' && numFields > 200) {
                         return;
