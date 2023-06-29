@@ -308,8 +308,7 @@ class ServerlessEsLogsPlugin {
       memorySize: 512,
       name,
       package: {
-        exclude: ['**'],
-        include: [`${this.logProcesserDir}/**`],
+        patterns: ['!**', `${this.logProcesserDir}/**`],
         individually: true,
       },
       runtime: this.serverless.service.provider.runtime ?? 'nodejs14.x',
