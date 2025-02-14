@@ -203,42 +203,6 @@ class ServerlessEsLogsPlugin {
 
     const permissionLogicalId = 'AllLambdasCWPermission';
 
-    // Add cloudwatch subscription for each function except log processer
-    functions.forEach((name: string) => {
-      /* istanbul ignore if */
-      if (name === this.logProcesserName) {
-        return;
-      }
-
-      const normalizedFunctionName = this.provider.naming.getNormalizedFunctionName(name);
-      const subscriptionLogicalId = `${normalizedFunctionName}SubscriptionFilter`;
-      const logGroupLogicalId = `${normalizedFunctionName}LogGroup`;
-      const logGroupName = template.Resources[logGroupLogicalId].Properties.LogGroupName;
-
-
-
-      // Create subscription filter
-      const subscriptionFilter = new SubscriptionFilterBuilder()
-        .withDestinationArn({
-          'Fn::GetAtt': [
-            this.logProcesserLogicalId,
-            'Arn',
-          ],
-        })
-        .withFilterPattern(filterPattern)
-        .withLogGroupName(logGroupName)
-        .withDependsOn([this.logProcesserLogicalId])
-        .build();
-
-      // Create subscription template
-      const subscriptionTemplate = new TemplateBuilder()
-        .withResource(subscriptionLogicalId, subscriptionFilter)
-        .build();
-
-      _.merge(template, subscriptionTemplate);
-    });
-
-
     const permissionTemplate = new TemplateBuilder()
       .withResource(permissionLogicalId, new LambdaPermissionBuilder()
         .withFunctionName({
@@ -271,6 +235,40 @@ class ServerlessEsLogsPlugin {
       .build();
 
     _.merge(template, permissionTemplate);
+
+    // Add cloudwatch subscription for each function except log processer
+    functions.forEach((name: string) => {
+      /* istanbul ignore if */
+      if (name === this.logProcesserName) {
+        return;
+      }
+
+      const normalizedFunctionName = this.provider.naming.getNormalizedFunctionName(name);
+      const subscriptionLogicalId = `${normalizedFunctionName}SubscriptionFilter`;
+      const logGroupLogicalId = `${normalizedFunctionName}LogGroup`;
+      const logGroupName = template.Resources[logGroupLogicalId].Properties.LogGroupName;
+
+      // Create subscription filter
+      const subscriptionFilter = new SubscriptionFilterBuilder()
+        .withDestinationArn({
+          'Fn::GetAtt': [
+            this.logProcesserLogicalId,
+            'Arn',
+          ],
+        })
+        .withFilterPattern(filterPattern)
+        .withLogGroupName(logGroupName)
+        .withDependsOn([this.logProcesserLogicalId, permissionLogicalId])
+        .build();
+
+      // Create subscription template
+      const subscriptionTemplate = new TemplateBuilder()
+        .withResource(subscriptionLogicalId, subscriptionFilter)
+        .build();
+
+      _.merge(template, subscriptionTemplate);
+    });
+
     
   }
 
